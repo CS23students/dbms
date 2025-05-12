@@ -1,0 +1,110 @@
+✅ 1. Insert into Department table
+INSERT INTO Department (Depno, Depname, Deplocation) VALUES 
+(01, 'SALES', 'Blocka'),
+(02, 'PURCHASE', 'Blockd'),
+(03, 'PRODUCTION', 'Blockb'),
+(04, 'MARKETING', 'Blocka'),
+(05, 'ACCOUNTS', 'Blockc'),
+(06, 'SOFTWARE', 'Blocke');
+
+✅ 2. Insert into Employee table
+INSERT INTO Employee (Empno, Empname, Designation, Date_of_join, Salary, Depno, Grade) VALUES 
+(1, 'Siva', 'manager', '1987-10-05', 15000.00, 05, 'A'),
+(2, 'Mani', 'salesman', '1987-04-12', 5000.75, 01, 'F'),
+(3, 'Raju', 'Clerk', '1989-11-30', 7000.00, 02, 'E'),
+(4, 'Babu', 'Clerk', '1995-01-04', 5000.50, 03, 'E'),
+(5, 'Ram', 'salesman', '2000-12-08', 3000.25, 01, 'F'),
+(6, 'Velu', 'programmer', '2002-02-24', 10000.50, 06, 'D'),
+(7, 'Ravi', 'accountant', '1991-09-12', 8000.25, 05, 'G'),
+(8, 'Balan', 'manager', '1993-06-07', 12000.75, 03, 'A'),
+(9, 'Mahesh', 'Officer', '1997-03-18', 10000.50, 02, 'B'),
+(10, 'Kumar', 'Analyst', '1995-01-15', 14500.00, 06, 'C');
+
+✅ 3. Display all columns of Employee and Department
+SELECT * FROM Employee;
+SELECT * FROM Department;
+
+✅ 4. Insert values for Phoneno using UPDATE & display Empname, Phoneno
+-- Adding phone numbers
+UPDATE Employee SET Phoneno = '9876543210' WHERE Empno = 1;
+UPDATE Employee SET Phoneno = '8765432109' WHERE Empno = 2;
+UPDATE Employee SET Phoneno = '7654321098' WHERE Empno = 3;
+UPDATE Employee SET Phoneno = '6543210987' WHERE Empno = 4;
+UPDATE Employee SET Phoneno = '5432109876' WHERE Empno = 5;
+UPDATE Employee SET Phoneno = '4321098765' WHERE Empno = 6;
+UPDATE Employee SET Phoneno = '3210987654' WHERE Empno = 7;
+UPDATE Employee SET Phoneno = '2109876543' WHERE Empno = 8;
+UPDATE Employee SET Phoneno = '1098765432' WHERE Empno = 9;
+UPDATE Employee SET Phoneno = '0987654321' WHERE Empno = 10;
+
+-- Display Empname and Phoneno
+SELECT Empname, Phoneno FROM Employee;
+
+✅ 5. Create duplicate employee table Emp
+CREATE TABLE Emp AS SELECT * FROM Employee;
+
+✅ 6. Display Empname, Designation, Years-of-service (Virtual/Calculated column)
+sql
+Copy
+Edit
+SELECT Empname, Designation, 
+    ROUND((CURRENT_DATE - Date_of_join) / 365) AS Years_of_service
+FROM Employee;
+
+✅ 7. Create a view with Empname, Designation, Depname
+CREATE VIEW EmpDeptView AS
+SELECT E.Empname, E.Designation, D.Depname
+FROM Employee E
+JOIN Department D ON E.Depno = D.Depno;
+
+✅ 8. List employees whose salary is equal to Rs.10,000.50
+SELECT * FROM Employee WHERE Salary = 10000.50;
+
+✅ 9. List employees whose depno is not equal to '01'
+SELECT * FROM Employee WHERE Depno <> 01;
+
+✅ 10. List employees who joined after '04-Apr-1995'
+SELECT * FROM Employee WHERE Date_of_join > '1995-04-04';
+
+✅ 11. List employees who belong to department 2, 3, 5 (IN operator)
+SELECT * FROM Employee WHERE Depno IN (2, 3, 5);
+
+✅ 12. List employees who joined between '01-Jan-1988' and '01-Jan-1998'
+SELECT * FROM Employee
+WHERE Date_of_join BETWEEN '1988-01-01' AND '1998-01-01';
+
+✅ 13. List employees whose name starts with 'R' (LIKE operator)
+SELECT * FROM Employee WHERE Empname LIKE 'R%';
+
+✅ 14. List employees who don’t have phone numbers (IS NULL operator)
+SELECT * FROM Employee WHERE Phoneno IS NULL;
+
+✅ 15. List employees in department '01' AND salary equal to 5000.75 (AND operator)
+SELECT * FROM Employee 
+WHERE Depno = 01 AND Salary = 5000.75;
+
+✅ 16. List employees who belong to department '01' OR salary equal to 5000.50 (OR operator)
+SELECT * FROM Employee 
+WHERE Depno = 01 OR Salary = 5000.50;
+
+✅ 17. List employees whose designation is other than 'Manager', 'Officer' (NOT operator)
+SELECT * FROM Employee 
+WHERE Designation NOT IN ('manager', 'Officer');
+
+✅ 18. List department details in descending order of department name
+SELECT * FROM Department 
+ORDER BY Depname DESC;
+
+✅ 19. Delete employees who joined before '01-Jan-1989'
+DELETE FROM Employee 
+WHERE Date_of_join < '1989-01-01';
+
+⚙️ Note:
+Ensure that the Employee table contains Phoneno column before updating.
+
+If not created yet, you can add Phoneno like this:
+
+sql
+Copy
+Edit
+ALTER TABLE Employee ADD Phoneno VARCHAR(15);
