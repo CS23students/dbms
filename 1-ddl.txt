@@ -1,0 +1,127 @@
+// SOME QUERY MAY BE DIFFERENT BUT WILL WORK
+
+🔹1. Create Department Table
+sql
+Copy
+Edit
+CREATE TABLE Department (
+  Depno NUMBER(2) PRIMARY KEY,
+  Depname VARCHAR2(15),
+  Deplocation VARCHAR2(10)
+);
+🔹2. Create Employee Table
+sql
+Copy
+Edit
+CREATE TABLE Employee (
+  Empno NUMBER(5) PRIMARY KEY,
+  Empname VARCHAR2(20),
+  Designation VARCHAR2(10),
+  Date_of_join DATE NOT NULL,
+  Salary NUMBER(9,2),
+  Depno NUMBER(2) REFERENCES Department(Depno)
+);
+🔹3. Create Course Table (Table-level constraints)
+sql
+Copy
+Edit
+CREATE TABLE Course (
+  Coursecode NUMBER(2),
+  Coursename VARCHAR2(15),
+  CONSTRAINT pk_course PRIMARY KEY (Coursecode)
+);
+🔹4. Create Student Table (Table-level constraints)
+sql
+Copy
+Edit
+CREATE TABLE Student (
+  Rollno NUMBER(5),
+  Name VARCHAR2(15),
+  Coursecode NUMBER(2),
+  Mark1 NUMBER(3) CHECK (Mark1 BETWEEN 0 AND 100),
+  Mark2 NUMBER(3) CHECK (Mark2 BETWEEN 0 AND 100),
+  CONSTRAINT pk_student PRIMARY KEY (Rollno),
+  CONSTRAINT fk_course FOREIGN KEY (Coursecode) REFERENCES Course(Coursecode)
+);
+🔹5. Display Structure of Tables
+sql
+Copy
+Edit
+DESC Department;
+DESC Employee;
+DESC Course;
+DESC Student;
+✅ Sample Output (for one DESC):
+
+scss
+Copy
+Edit
+Name         Null?     Type
+------------ --------- ------------
+DEPNO        NOT NULL  NUMBER(2)
+DEPNAME                VARCHAR2(15)
+DEPLOCATION            VARCHAR2(10)
+🔹6. Add Columns to Employee
+sql
+Copy
+Edit
+ALTER TABLE Employee ADD (
+  Phoneno NUMBER(10),
+  Grade VARCHAR2(1)
+);
+🔹7. Change Size of Deplocation
+sql
+Copy
+Edit
+ALTER TABLE Department MODIFY Deplocation VARCHAR2(15);
+🔹8. Change Datatype of Rollno to CHAR
+sql
+Copy
+Edit
+ALTER TABLE Student MODIFY Rollno CHAR(5);
+🔹9. Drop Column Mark2
+sql
+Copy
+Edit
+ALTER TABLE Student DROP COLUMN Mark2;
+🔹10. Display Names of Tables Created by Current User
+sql
+Copy
+Edit
+SELECT table_name FROM user_tables;
+✅ Sample Output:
+
+pgsql
+Copy
+Edit
+TABLE_NAME
+--------------------
+DEPARTMENT
+EMPLOYEE
+COURSE
+STUDENT
+🔹11. Delete Contents of Student Table
+sql
+Copy
+Edit
+DELETE FROM Student;
+🔹12. Delete the Student Table
+sql
+Copy
+Edit
+DROP TABLE Student;
+🔹13. Rename Employee Table as Emp
+sql
+Copy
+Edit
+RENAME Employee TO Emp;
+🔹14. Add NOT NULL Constraint on Name in Student
+sql
+Copy
+Edit
+ALTER TABLE Student MODIFY Name VARCHAR2(15) NOT NULL;
+🔹15. Add DEFAULT Constraint on Work_location Column in Employee
+sql
+Copy
+Edit
+ALTER TABLE Employee ADD Work_location VARCHAR2(15) DEFAULT 'HeadOffice';
