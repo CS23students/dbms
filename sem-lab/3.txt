@@ -1,0 +1,133 @@
+3. Create a tables
+Events(eventid, name, description,city)
+Participants(playerid,name,eventid,gender,year)
+Prizes (prizeid, prizemoney,rank,eventid,year)
+Winners(Prizeid,playerid)
+a)Use appropriate foreign keys and primary keys
+b)playerid should be contain atleast one digit number 
+c)Retrive all the event names in which event all the prize winners are the females
+d)create a view for the prize winners who gots first prize in the all events
+d)write a trigger for this condition(I don't know the actual qn for this but I tell this what I understand.)
+ If a new events created,then 3 prizes must be created along with the events.(1st prize -1500,2nd-1000 ,3rd-500)
+
+
+
+ a) Create Tables with Appropriate Constraints-- Events Table
+CREATE TABLE Events (
+    eventid     NUMBER PRIMARY KEY,
+    name        VARCHAR2(50),
+    description VARCHAR2(100),
+    city        VARCHAR2(50)
+);
+
+-- Participants Table
+CREATE TABLE Participants (
+    playerid    VARCHAR2(10) CHECK (REGEXP_LIKE(playerid, '.*[0-9].*')), -- At least one digit
+    name        VARCHAR2(50),
+    eventid     NUMBER,
+    gender      CHAR(1) CHECK (gender IN ('M', 'F')),
+    year        NUMBER,
+    PRIMARY KEY (playerid, eventid),
+    FOREIGN KEY (eventid) REFERENCES Events(eventid)
+);
+
+-- Prizes Table
+CREATE TABLE Prizes (
+    prizeid     NUMBER PRIMARY KEY,
+    prizemoney  NUMBER,
+    rank        NUMBER CHECK (rank IN (1, 2, 3)),
+    eventid     NUMBER,
+    year        NUMBER,
+    FOREIGN KEY (eventid) REFERENCES Events(eventid)
+);
+
+-- Winners Table
+CREATE TABLE Winners (
+    prizeid     NUMBER,
+    playerid    VARCHAR2(10),
+    PRIMARY KEY (prizeid, playerid),
+    FOREIGN KEY (prizeid) REFERENCES Prizes(prizeid),
+    FOREIGN KEY (playerid) REFERENCES Participants(playerid)
+);
+
+
+
+🔹 Sample Insert
+
+-- Event
+INSERT INTO Events VALUES (1, 'Code Sprint', 'Programming contest', 'Chennai');
+
+-- Participants
+INSERT INTO Participants VALUES ('P101', 'Alice', 1, 'F', 2024);
+INSERT INTO Participants VALUES ('P102', 'Bob', 1, 'M', 2024);
+INSERT INTO Participants VALUES ('P103', 'Clara', 1, 'F', 2024);
+
+-- Prizes
+INSERT INTO Prizes VALUES (201, 1500, 1, 1, 2024);
+INSERT INTO Prizes VALUES (202, 1000, 2, 1, 2024);
+INSERT INTO Prizes VALUES (203, 500, 3, 1, 2024);
+
+-- Winners
+INSERT INTO Winners VALUES (201, 'P101');
+INSERT INTO Winners VALUES (202, 'P103');
+INSERT INTO Winners VALUES (203, 'P103');
+
+COMMIT;
+
+
+🔹 b) playerid should contain at least one digit number ✅
+
+CHECK (REGEXP_LIKE(playerid, '.*[0-9].*'))
+
+
+🔹 c) Retrieve All Event Names Where All Prize Winners are Female
+
+SELECT DISTINCT e.name
+FROM Events e
+WHERE NOT EXISTS (
+    SELECT *
+    FROM Winners w
+    JOIN Participants p ON w.playerid = p.playerid
+    WHERE w.prizeid IN (
+        SELECT prizeid FROM Prizes WHERE eventid = e.eventid
+    )
+    AND p.gender = 'M'
+);
+
+
+
+🔹 d) Create a View for 1st Prize Winners in All Events
+CREATE OR REPLACE VIEW First_Prize_Winners AS
+SELECT p.name AS player_name, ev.name AS event_name, pr.prizemoney
+FROM Winners w
+JOIN Participants p ON w.playerid = p.playerid
+JOIN Prizes pr ON w.prizeid = pr.prizeid
+JOIN Events ev ON pr.eventid = ev.eventid
+WHERE pr.rank = 1;
+
+
+🔹 e) Trigger: On Insert of New Event, Add 3 Prizes Automatically
+CREATE OR REPLACE TRIGGER trg_create_prizes
+AFTER INSERT ON Events
+FOR EACH ROW
+BEGIN
+    INSERT INTO Prizes (prizeid, prizemoney, rank, eventid, year)
+    VALUES (Prizes_seq.NEXTVAL, 1500, 1, :NEW.eventid, EXTRACT(YEAR FROM SYSDATE));
+    
+    INSERT INTO Prizes (prizeid, prizemoney, rank, eventid, year)
+    VALUES (Prizes_seq.NEXTVAL, 1000, 2, :NEW.eventid, EXTRACT(YEAR FROM SYSDATE));
+    
+    INSERT INTO Prizes (prizeid, prizemoney, rank, eventid, year)
+    VALUES (Prizes_seq.NEXTVAL, 500, 3, :NEW.eventid, EXTRACT(YEAR FROM SYSDATE));
+END;
+/
+
+
+➤ Create Sequence for Prize ID
+CREATE SEQUENCE Prizes_seq START WITH 300 INCREMENT BY 1;
+
+✅ To Test the Trigger:
+INSERT INTO Events VALUES (2, 'HackFest', 'Hackathon competition', 'Coimbatore');
+
+-- Check
+SELECT * FROM Prizes WHERE eventid = 2;
