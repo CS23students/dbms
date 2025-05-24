@@ -1,0 +1,97 @@
+ 2. Create the employee table (empid,empname,empdept,job,mgr,sal)
+  - 1.display empname in descending order
+  - 2.change the column name using alter
+  - 3.insert the row inside the employee table using trigger 
+  - 4.by using group by clause display the empname on department="xxx" along to the salary.
+  - 5.display the empname in each department with minimum salary.
+
+
+Step 1: Create the Employee Table
+
+CREATE TABLE Employee (
+    empid     NUMBER PRIMARY KEY,
+    empname   VARCHAR2(50),
+    empdept   VARCHAR2(20),
+    job       VARCHAR2(20),
+    mgr       NUMBER,
+    sal       NUMBER(10,2)
+);
+
+
+🔹 Step 2: Insert Sample Data
+INSERT INTO Employee VALUES (101, 'Arun', 'HR', 'Manager', NULL, 25000);
+INSERT INTO Employee VALUES (102, 'Bala', 'IT', 'Developer', 101, 20000);
+INSERT INTO Employee VALUES (103, 'Charan', 'IT', 'Tester', 101, 18000);
+INSERT INTO Employee VALUES (104, 'Dinesh', 'Sales', 'Executive', NULL, 15000);
+INSERT INTO Employee VALUES (105, 'Esha', 'HR', 'Clerk', 101, 12000);
+
+COMMIT;
+
+
+Q1: Display empname in Descending Order
+SELECT empname FROM Employee ORDER BY empname DESC;
+
+📌 Sample Output:
+EMPNAME
+-------
+Esha
+Dinesh
+Charan
+Bala
+Arun
+
+🔹 Q2: Change a Column Name using ALTER
+ALTER TABLE Employee RENAME COLUMN empname TO emp_full_name;
+
+🔹 Q3: Insert a Row using Trigger
+-- Dummy table to trigger employee insert
+CREATE TABLE TempTrigger (
+    action CHAR(1)
+);
+
+-- Trigger
+CREATE OR REPLACE TRIGGER trg_insert_emp
+AFTER INSERT ON TempTrigger
+BEGIN
+    INSERT INTO Employee(empid, emp_full_name, empdept, job, mgr, sal)
+    VALUES (106, 'Kumar', 'Finance', 'Analyst', NULL, 18000);
+END;
+/
+
+-- Insert into dummy table to trigger
+INSERT INTO TempTrigger VALUES ('A');
+COMMIT;
+
+
+SELECT * FROM Employee WHERE empid = 106;
+
+
+Q4: Use GROUP BY on Department="xxx" and Show emp_full_name and Salary
+SELECT empdept, emp_full_name, SUM(sal) AS total_salary
+FROM Employee
+WHERE empdept = 'IT'
+GROUP BY empdept, emp_full_name;
+
+📌 Sample Output:
+EMPDEPT | EMP_FULL_NAME | TOTAL_SALARY
+--------|----------------|--------------
+IT      | Bala           | 20000
+IT      | Charan         | 18000
+
+
+🔹 Q5: Display Employees in Each Department with Minimum Salary
+
+SELECT emp_full_name, empdept, sal
+FROM Employee e
+WHERE sal = (
+    SELECT MIN(sal)
+    FROM Employee
+    WHERE empdept = e.empdept
+);
+📌 Sample Output:
+EMP_FULL_NAME | EMPDEPT | SAL
+--------------|---------|-----
+Esha          | HR      | 12000
+Charan        | IT      | 18000
+Dinesh        | Sales   | 15000
+
