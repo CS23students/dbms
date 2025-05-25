@@ -1,0 +1,56 @@
+4. 
+1.)To develop query  grant some  privileges employees into departments
+2) To develop query  revoke all  privileges  to employees from departments
+3)To develop query  revoke some  privileges  to employees from departments
+4)To develop query implement savepoint 
+5) Demonstrate procedural adutu terla
+
+
+🔹 1. Grant some privileges to employees on departments
+GRANT SELECT, UPDATE ON Department TO employees;
+
+
+🔹 2. Revoke all privileges from employees on departments
+REVOKE ALL ON Department FROM employees;
+
+
+🔹 3. Revoke some privileges from employees on departments
+REVOKE UPDATE ON Department FROM employees;
+
+🔹 4. Implement Savepoint
+-- Sample transaction
+INSERT INTO Department VALUES (30, 'Finance', 'Chennai');
+SAVEPOINT A;
+
+INSERT INTO Department VALUES (40, 'Marketing', 'Bangalore');
+SAVEPOINT B;
+
+ROLLBACK TO A;
+
+-- Check
+SELECT * FROM Department;
+
+
+🔹 5. Demonstrate a Procedure
+CREATE OR REPLACE PROCEDURE show_dept_details(p_depno IN NUMBER) IS
+  v_name Department.depname%TYPE;
+  v_loc Department.deplocation%TYPE;
+BEGIN
+  SELECT depname, deplocation INTO v_name, v_loc
+  FROM Department
+  WHERE depno = p_depno;
+
+  DBMS_OUTPUT.PUT_LINE('Department Name: ' || v_name);
+  DBMS_OUTPUT.PUT_LINE('Location       : ' || v_loc);
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No department found with depno: ' || p_depno);
+END;
+/
+
+
+✅ To execute:
+SET SERVEROUTPUT ON;
+EXEC show_dept_details(10);
+
+
