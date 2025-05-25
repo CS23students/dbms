@@ -1,0 +1,132 @@
+Write aGUI cop friendly app  using esevai database and implement database features
+
+🗃️ 1. DATABASE DESIGN (SQLite)
+-- Citizen table
+CREATE TABLE Citizen (
+    citizen_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    aadhar TEXT UNIQUE,
+    phone TEXT,
+    address TEXT
+);
+
+-- Incident table
+CREATE TABLE Incident (
+    incident_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    citizen_id INTEGER,
+    type TEXT NOT NULL,
+    description TEXT,
+    date TEXT DEFAULT CURRENT_DATE,
+    location TEXT,
+    FOREIGN KEY (citizen_id) REFERENCES Citizen(citizen_id)
+);
+
+-- FIR table
+CREATE TABLE FIR (
+    fir_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id INTEGER,
+    status TEXT CHECK(status IN ('Pending', 'Resolved')),
+    remarks TEXT,
+    officer TEXT,
+    FOREIGN KEY (incident_id) REFERENCES Incident(incident_id)
+);
+
+🧠 2. TRIGGER
+-- Trigger to auto-create an FIR when an incident is added
+CREATE TRIGGER auto_create_fir
+AFTER INSERT ON Incident
+BEGIN
+  INSERT INTO FIR (incident_id, status, remarks, officer)
+  VALUES (NEW.incident_id, 'Pending', 'Auto-generated FIR', 'Unknown');
+END;
+
+
+👁️ 3. VIEW
+CREATE VIEW Incident_FIR_View AS
+SELECT c.name, c.phone, i.type, i.location, f.status
+FROM Citizen c
+JOIN Incident i ON c.citizen_id = i.citizen_id
+JOIN FIR f ON i.incident_id = f.incident_id;
+
+
+🧮 4. USER-DEFINED FUNCTION (Example in Python)
+def fir_priority(status):
+    return "High" if status == "Pending" else "Low"
+conn.create_function("fir_priority", 1, fir_priority)
+
+🧑‍💻 5. GUI with Tkinter (Python)
+
+import sqlite3
+from tkinter import *
+
+conn = sqlite3.connect("esevai.db")
+cursor = conn.cursor()
+
+def register_citizen():
+    name = name_entry.get()
+    aadhar = aadhar_entry.get()
+    phone = phone_entry.get()
+    address = address_entry.get()
+    cursor.execute("INSERT INTO Citizen (name, aadhar, phone, address) VALUES (?, ?, ?, ?)",
+                   (name, aadhar, phone, address))
+    conn.commit()
+    msg_label.config(text="Citizen Registered Successfully!")
+
+def report_incident():
+    cid = int(cid_entry.get())
+    itype = type_entry.get()
+    desc = desc_entry.get()
+    loc = loc_entry.get()
+    cursor.execute("INSERT INTO Incident (citizen_id, type, description, location) VALUES (?, ?, ?, ?)",
+                   (cid, itype, desc, loc))
+    conn.commit()
+    msg_label.config(text="Incident Reported! FIR Auto Created.")
+
+root = Tk()
+root.title("eSevai - Cop App")
+
+Label(root, text="--- Register Citizen ---").grid(row=0, columnspan=2)
+Label(root, text="Name").grid(row=1, column=0)
+name_entry = Entry(root)
+name_entry.grid(row=1, column=1)
+
+Label(root, text="Aadhar").grid(row=2, column=0)
+aadhar_entry = Entry(root)
+aadhar_entry.grid(row=2, column=1)
+
+Label(root, text="Phone").grid(row=3, column=0)
+phone_entry = Entry(root)
+phone_entry.grid(row=3, column=1)
+
+Label(root, text="Address").grid(row=4, column=0)
+address_entry = Entry(root)
+address_entry.grid(row=4, column=1)
+
+Button(root, text="Register", command=register_citizen).grid(row=5, columnspan=2)
+
+Label(root, text="--- Report Incident ---").grid(row=6, columnspan=2)
+Label(root, text="Citizen ID").grid(row=7, column=0)
+cid_entry = Entry(root)
+cid_entry.grid(row=7, column=1)
+
+Label(root, text="Type").grid(row=8, column=0)
+type_entry = Entry(root)
+type_entry.grid(row=8, column=1)
+
+Label(root, text="Description").grid(row=9, column=0)
+desc_entry = Entry(root)
+desc_entry.grid(row=9, column=1)
+
+Label(root, text="Location").grid(row=10, column=0)
+loc_entry = Entry(root)
+loc_entry.grid(row=10, column=1)
+
+Button(root, text="Report", command=report_incident).grid(row=11, columnspan=2)
+
+msg_label = Label(root, text="")
+msg_label.grid(row=12, columnspan=2)
+
+root.mainloop()
+
+
+
