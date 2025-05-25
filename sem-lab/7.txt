@@ -1,0 +1,86 @@
+Create a table bank(s.no,cust_name,acc_no, balance,branch)
+a)Select from where operation
+b)select using comparison operator
+c)update balance in second row
+d)select using in between in the field balance
+e)create trigger where balance below 1000
+
+
+🔹 Step 1: Create Table
+CREATE TABLE bank (
+  s_no NUMBER PRIMARY KEY,
+  cust_name VARCHAR2(30),
+  acc_no NUMBER UNIQUE,
+  balance NUMBER,
+  branch VARCHAR2(30)
+);
+
+
+🔹 Step 2: Insert Sample Data
+INSERT INTO bank VALUES (1, 'Ravi Kumar', 1001, 7500, 'Chennai');
+INSERT INTO bank VALUES (2, 'Priya Shah', 1002, 950, 'Delhi');
+INSERT INTO bank VALUES (3, 'Arun Mehta', 1003, 12000, 'Mumbai');
+INSERT INTO bank VALUES (4, 'Sneha Rao', 1004, 4500, 'Delhi');
+
+
+🔹 a) SELECT with WHERE
+SELECT * FROM bank WHERE branch = 'Delhi';
+
+Sample Output:
+S_NO  CUST_NAME   ACC_NO  BALANCE  BRANCH
+----  ----------  ------  -------  --------
+2     Priya Shah  1002    950      Delhi
+4     Sneha Rao   1004    4500     Delhi
+
+
+🔹 b) SELECT using Comparison Operator
+SELECT cust_name, balance FROM bank WHERE balance > 5000;
+
+CUST_NAME   BALANCE
+----------  -------
+Ravi Kumar  7500
+Arun Mehta  12000
+
+
+🔹 c) UPDATE balance in second row
+
+UPDATE bank SET balance = 1500 WHERE s_no = 2;
+
+
+SELECT * FROM bank WHERE s_no = 2;
+
+
+🔹 d) SELECT using BETWEEN on balance
+
+SELECT cust_name, balance FROM bank WHERE balance BETWEEN 1000 AND 10000;
+
+
+CUST_NAME   BALANCE
+----------  -------
+Ravi Kumar  7500
+Sneha Rao   4500
+Priya Shah  1500
+
+
+🔹 e) TRIGGER: Prevent insertion if balance < 1000
+
+CREATE OR REPLACE TRIGGER trg_min_balance
+BEFORE INSERT OR UPDATE ON bank
+FOR EACH ROW
+BEGIN
+  IF :NEW.balance < 1000 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Balance must be at least 1000.');
+  END IF;
+END;
+/
+
+
+INSERT INTO bank VALUES (5, 'Nisha Das', 1005, 800, 'Kolkata');
+
+
+
+ERROR at line 1:
+ORA-20001: Balance must be at least 1000.
+ORA-06512: at "SCHEMA.TRG_MIN_BALANCE", line 3
+
+
