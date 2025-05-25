@@ -1,0 +1,97 @@
+Create a table employee(s.no, name, designation,branch)
+1.add a colum salary to the table 
+2.delete 2nd row of the  table
+3.create a copy of the table,drop the table
+4.demonstrate the triggers for automatic updation
+
+
+🔹 Step 1: Create the employee Table
+
+CREATE TABLE employee (
+  s_no NUMBER PRIMARY KEY,
+  name VARCHAR2(30),
+  designation VARCHAR2(20),
+  branch VARCHAR2(30)
+);
+
+
+🔹 Step 2: Insert Sample Data
+
+INSERT INTO employee VALUES (1, 'Ravi Kumar', 'Manager', 'Chennai');
+INSERT INTO employee VALUES (2, 'Priya Shah', 'Clerk', 'Delhi');
+INSERT INTO employee VALUES (3, 'Arun Mehta', 'Analyst', 'Mumbai');
+
+
+
+🔹 1. Add a column salary to the table
+
+ALTER TABLE employee ADD salary NUMBER(10,2);
+
+(Optional) Update sample salaries:
+UPDATE employee SET salary = 55000 WHERE s_no = 1;
+UPDATE employee SET salary = 30000 WHERE s_no = 2;
+UPDATE employee SET salary = 40000 WHERE s_no = 3;
+
+🔹 2. Delete the 2nd row from the table
+DELETE FROM employee WHERE s_no = 2;
+
+
+🔹 3. Create a copy of the table, then drop the original
+-- Create a copy
+CREATE TABLE employee_copy AS SELECT * FROM employee;
+
+-- Drop the original
+DROP TABLE employee;
+
+
+🔹 4. Demonstrate a trigger for automatic updation
+Let’s say we want to log changes to salary into a separate table whenever salary is updated:
+
+Step 1: Recreate the employee table (since we dropped it above):
+CREATE TABLE employee (
+  s_no NUMBER PRIMARY KEY,
+  name VARCHAR2(30),
+  designation VARCHAR2(20),
+  branch VARCHAR2(30),
+  salary NUMBER(10,2)
+);
+Step 2: Insert data again:
+INSERT INTO employee VALUES (1, 'Ravi Kumar', 'Manager', 'Chennai', 55000);
+INSERT INTO employee VALUES (3, 'Arun Mehta', 'Analyst', 'Mumbai', 40000);
+
+
+Step 3: Create a log table
+CREATE TABLE salary_log (
+  s_no NUMBER,
+  old_salary NUMBER(10,2),
+  new_salary NUMBER(10,2),
+  changed_on DATE
+);
+
+
+Step 4: Create the Trigger
+
+CREATE OR REPLACE TRIGGER trg_salary_update
+BEFORE UPDATE OF salary ON employee
+FOR EACH ROW
+BEGIN
+  INSERT INTO salary_log VALUES (:OLD.s_no, :OLD.salary, :NEW.salary, SYSDATE);
+END;
+/
+
+
+Step 5: Test Trigger
+
+UPDATE employee SET salary = 60000 WHERE s_no = 1;
+
+
+Step 6: View Log Table
+SELECT * FROM salary_log;
+
+
+S_NO  OLD_SALARY  NEW_SALARY  CHANGED_ON
+----  ----------  ----------  -------------------
+1     55000       60000       23-MAY-25
+
+
+
