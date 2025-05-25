@@ -1,0 +1,76 @@
+Create an student profile in XML database and validate using XML schema
+
+Aim: 
+To create an XML database to store structured data and validate it using an XML Schema (XSD) to ensure 
+the correctness and structure of the data. 
+Explanation: 
+• XML (Extensible Markup Language): 
+A language used to store and share data. It is easy for both humans and computers to 
+read. 
+• XML Database: 
+An XML file that holds data using tags. It works like a simple database and is used for 
+sharing or saving structured data. 
+• XML Schema (XSD): 
+A file that defines the correct format and rules for an XML file. It checks if the data in the 
+XML is correct. 
+• Validation Process:  
+Validation means checking the XML file using the XSD to make sure the data follows the 
+rules. 
+
+<?xml version="1.0" encoding="UTF-8"?> 
+<students xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+xsi:noNamespaceSchemaLocation="students.xsd"> 
+<student> 
+<id>101</id> 
+<name>Alice</name> 
+<course>Computer Science</course> 
+<age>20</age> 
+</student> 
+<student>
+       <id>102</id> 
+        <name>Bob</name> 
+        <course>Information Technology</course> 
+        <age>22</age> 
+    </student> 
+</students> 
+
+
+Step 2: Create the XML Schema 
+File name: students.xsd 
+<?xml version="1.0" encoding="UTF-8"?> 
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"> 
+  <xs:element name="students"> 
+    <xs:complexType> 
+      <xs:sequence> 
+        <xs:element name="student" maxOccurs="unbounded"> 
+          <xs:complexType> 
+            <xs:sequence> 
+              <xs:element name="id" type="xs:integer"/> 
+              <xs:element name="name" type="xs:string"/> 
+              <xs:element name="course" type="xs:string"/> 
+              <xs:element name="age" type="xs:integer"/> 
+            </xs:sequence> 
+          </xs:complexType> 
+        </xs:element> 
+      </xs:sequence> 
+    </xs:complexType> 
+  </xs:element> 
+</xs:schema>
+
+Step 3: Validation 
+• The XML file (students.xml) includes a reference to the XML Schema (students.xsd) using the  
+xsi: noNamespaceSchemaLocation attribute. 
+• An XML validator (such as an IDE like VS Code, online XML validator, or code using parsers like 
+Python’s lxml) is used. 
+• During validation, the XML parser checks whether the XML elements, order, and data types 
+match those specified in the XSD. 
+How to Use an XML Validator: 
+1. Online Validator: 
+• Go to a site like https://www.freeformatter.com/xml-validator-xsd.html. 
+• Paste or upload your XML file. 
+• Upload the corresponding XSD file. 
+• Click "Validate." 
+• See the result. 
+Result:  
+The XML file was successfully validated against the XML Schema.Validation result: The XML database 
+is valid as per the XML Schema.
