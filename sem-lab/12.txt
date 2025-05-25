@@ -1,0 +1,79 @@
+Create a employee database and write sql trigger for operations insert, delete, update
+
+🗃️ Step 1: Create Employee Table
+CREATE TABLE Employee (
+    emp_id NUMBER PRIMARY KEY,
+    emp_name VARCHAR2(50),
+    emp_dept VARCHAR2(30),
+    salary NUMBER
+);
+
+
+🗃️ Step 2: Create Log Table for Trigger Actions
+CREATE TABLE Emp_Log (
+    log_id NUMBER GENERATED ALWAYS AS IDENTITY,
+    action_type VARCHAR2(10),
+    emp_id NUMBER,
+    emp_name VARCHAR2(50),
+    emp_dept VARCHAR2(30),
+    salary NUMBER,
+    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+🔁 Trigger 1: Log on INSERT
+
+CREATE OR REPLACE TRIGGER trg_emp_insert
+AFTER INSERT ON Employee
+FOR EACH ROW
+BEGIN
+    INSERT INTO Emp_Log(action_type, emp_id, emp_name, emp_dept, salary)
+    VALUES ('INSERT', :NEW.emp_id, :NEW.emp_name, :NEW.emp_dept, :NEW.salary);
+END;
+/
+
+
+🔁 Trigger 2: Log on DELETE
+CREATE OR REPLACE TRIGGER trg_emp_delete
+BEFORE DELETE ON Employee
+FOR EACH ROW
+BEGIN
+    INSERT INTO Emp_Log(action_type, emp_id, emp_name, emp_dept, salary)
+    VALUES ('DELETE', :OLD.emp_id, :OLD.emp_name, :OLD.emp_dept, :OLD.salary);
+END;
+/
+
+
+🔁 Trigger 3: Log on UPDATE
+CREATE OR REPLACE TRIGGER trg_emp_update
+AFTER UPDATE ON Employee
+FOR EACH ROW
+BEGIN
+    INSERT INTO Emp_Log(action_type, emp_id, emp_name, emp_dept, salary)
+    VALUES ('UPDATE', :NEW.emp_id, :NEW.emp_name, :NEW.emp_dept, :NEW.salary);
+END;
+/
+
+✅ Test Data and Output
+-- Insert
+INSERT INTO Employee VALUES (101, 'Sudharsan', 'IT', 45000);
+INSERT INTO Employee VALUES (102, 'Ram', 'HR', 35000);
+
+-- Update
+UPDATE Employee SET salary = 47000 WHERE emp_id = 101;
+
+-- Delete
+DELETE FROM Employee WHERE emp_id = 102;
+
+-- Check log
+SELECT * FROM Emp_Log;
+
+
+
+| LOG\_ID | ACTION\_TYPE | EMP\_ID | EMP\_NAME | EMP\_DEPT | SALARY | ACTION\_TIME          |
+| ------- | ------------ | ------- | --------- | --------- | ------ | --------------------- |
+| 1       | INSERT       | 101     | Sudharsan | IT        | 45000  | 23-MAY-25 10:30:01 AM |
+| 2       | INSERT       | 102     | Ram       | HR        | 35000  | 23-MAY-25 10:30:02 AM |
+| 3       | UPDATE       | 101     | Sudharsan | IT        | 47000  | 23-MAY-25 10:30:03 AM |
+| 4       | DELETE       | 102     | Ram       | HR        | 35000  | 23-MAY-25 10:30:04 AM |
+
