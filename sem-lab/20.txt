@@ -1,0 +1,151 @@
+7. Consider the schema for College Database:
+
+STUDENT (Beg No, StudName, Address, Phone, Gender)
+
+SUBJECT (Subcode. de, Title, Sem, Credits)
+
+MARKS (RegNo, Subcode, Test1, Test2, Test3, Finalmark)
+
+22
+
+a) Compute the total number of male and female students in each semester and in cach section.
+
+b) Calculate the Finalmark (average corresponding table for all students. of best two test marks) and update
+
+c) Categorize students based on the following criterion:
+
+If Finalmark = 81 to 100 then CAT = 'Outstanding' If Finalmark = 51 to 80 then CAT = 'Average'
+
+If Finalmark < 51 then CAT = 'Weak
+
+d) Create a view of Test3 marks of particular student in all subjects.
+
+e) Demonstrate the procedure for the above Database. Give me the answer for dbms
+
+
+✅ Table Creation (Schema Setup)
+-- Student Table
+CREATE TABLE Student (
+    RegNo INT PRIMARY KEY,
+    StudName VARCHAR(50),
+    Address VARCHAR(100),
+    Phone VARCHAR(15),
+    Gender VARCHAR(10)
+);
+
+-- Subject Table
+CREATE TABLE Subject (
+    Subcode VARCHAR(10) PRIMARY KEY,
+    Title VARCHAR(50),
+    Sem INT,
+    Credits INT
+);
+
+-- Marks Table
+CREATE TABLE Marks (
+    RegNo INT,
+    Subcode VARCHAR(10),
+    Test1 INT,
+    Test2 INT,
+    Test3 INT,
+    FinalMark INT,
+    CAT VARCHAR(20),
+    FOREIGN KEY (RegNo) REFERENCES Student(RegNo),
+    FOREIGN KEY (Subcode) REFERENCES Subject(Subcode)
+);
+
+
+
+📥 Sample Data
+INSERT INTO Student VALUES (101, 'Anjali', 'Chennai', '9876543210', 'Female');
+INSERT INTO Student VALUES (102, 'Raj', 'Madurai', '8765432190', 'Male');
+INSERT INTO Student VALUES (103, 'Priya', 'Salem', '7654321890', 'Female');
+
+INSERT INTO Subject VALUES ('CS101', 'DBMS', 3, 4);
+INSERT INTO Subject VALUES ('CS102', 'OS', 3, 4);
+
+INSERT INTO Marks VALUES (101, 'CS101', 78, 85, 82, NULL, NULL);
+INSERT INTO Marks VALUES (101, 'CS102', 67, 72, 68, NULL, NULL);
+INSERT INTO Marks VALUES (102, 'CS101', 45, 51, 38, NULL, NULL);
+INSERT INTO Marks VALUES (103, 'CS102', 87, 89, 90, NULL, NULL);
+
+
+a) Compute total male and female students
+If "semester" and "section" info is not present in Student, we assume Subject.Sem relates to student through Marks.
+SELECT 
+    s.Gender, 
+    sub.Sem, 
+    COUNT(DISTINCT s.RegNo) AS Total_Students
+FROM Student s
+JOIN Marks m ON s.RegNo = m.RegNo
+JOIN Subject sub ON m.Subcode = sub.Subcode
+GROUP BY s.Gender, sub.Sem;
+
+
+b) Calculate Finalmark (best 2 of 3 tests) and update
+UPDATE Marks
+SET Finalmark = (
+    SELECT (t1 + t2 - LEAST(t1, t2, t3))
+    FROM (
+        SELECT Test1 AS t1, Test2 AS t2, Test3 AS t3
+        FROM Marks m2
+        WHERE m2.RegNo = Marks.RegNo AND m2.Subcode = Marks.Subcode
+    )
+);
+
+
+c) Categorize students (CAT)
+UPDATE Marks
+SET CAT = CASE
+    WHEN Finalmark BETWEEN 81 AND 100 THEN 'Outstanding'
+    WHEN Finalmark BETWEEN 51 AND 80 THEN 'Average'
+    ELSE 'Weak'
+END;
+
+
+d) Create a view of Test3 marks of a particular student
+
+CREATE VIEW Student_Test3_View AS
+SELECT s.RegNo, s.StudName, m.Subcode, m.Test3
+FROM Student s
+JOIN Marks m ON s.RegNo = m.RegNo;
+
+
+-- Usage:
+SELECT * FROM Student_Test3_View WHERE RegNo = 101;
+
+
+e) Procedure for Inserting into Marks and Auto-Calculating Finalmark + CAT
+
+CREATE OR REPLACE PROCEDURE insert_marks (
+    p_regno INT,
+    p_subcode VARCHAR,
+    p_test1 INT,
+    p_test2 INT,
+    p_test3 INT
+) AS
+    v_finalmark INT;
+    v_cat VARCHAR(20);
+BEGIN
+    v_finalmark := p_test1 + p_test2 + p_test3 - LEAST(p_test1, p_test2, p_test3);
+
+    IF v_finalmark BETWEEN 81 AND 100 THEN
+        v_cat := 'Outstanding';
+    ELSIF v_finalmark BETWEEN 51 AND 80 THEN
+        v_cat := 'Average';
+    ELSE
+        v_cat := 'Weak';
+    END IF;
+
+    INSERT INTO Marks(RegNo, Subcode, Test1, Test2, Test3, Finalmark, CAT)
+    VALUES (p_regno, p_subcode, p_test1, p_test2, p_test3, v_finalmark, v_cat);
+
+    DBMS_OUTPUT.PUT_LINE('Record inserted successfully with FinalMark and Category.');
+END;
+
+
+🔄 Run Procedure Example
+BEGIN
+    insert_marks(103, 'CS101', 88, 92, 85);
+END;
+
