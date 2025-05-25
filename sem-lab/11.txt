@@ -1,0 +1,170 @@
+Develop a simple GUI based movie ticket reservation sand use all the database features
+
+🗃️ Database Schema (SQLite)
+
+CREATE TABLE IF NOT EXISTS Movies (
+    movie_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    language TEXT,
+    price REAL
+);
+
+CREATE TABLE IF NOT EXISTS Customers (
+    cust_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Tickets (
+    ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER,
+    movie_id INTEGER,
+    quantity INTEGER,
+    FOREIGN KEY (cust_id) REFERENCES Customers(cust_id),
+    FOREIGN KEY (movie_id) REFERENCES Movies(movie_id)
+);
+
+-- Trigger: prevent zero or negative ticket quantity
+CREATE TRIGGER IF NOT EXISTS valid_quantity
+BEFORE INSERT ON Tickets
+FOR EACH ROW
+WHEN NEW.quantity <= 0
+BEGIN
+    SELECT RAISE(FAIL, 'Quantity must be greater than zero');
+END;
+
+-- View: Total sales by movie
+CREATE VIEW IF NOT EXISTS MovieSales AS
+SELECT M.title, SUM(T.quantity) AS total_tickets, SUM(M.price * T.quantity) AS total_sales
+FROM Movies M
+JOIN Tickets T ON M.movie_id = T.movie_id
+GROUP BY M.title;
+
+
+🖥 Python GUI Application (ticket_reservation.py)
+
+import sqlite3
+from tkinter import *
+from tkinter import messagebox
+
+conn = sqlite3.connect('movie_reservation.db')
+cursor = conn.cursor()
+
+# DB Setup
+cursor.executescript("""
+CREATE TABLE IF NOT EXISTS Movies (
+    movie_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    language TEXT,
+    price REAL
+);
+CREATE TABLE IF NOT EXISTS Customers (
+    cust_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS Tickets (
+    ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER,
+    movie_id INTEGER,
+    quantity INTEGER,
+    FOREIGN KEY (cust_id) REFERENCES Customers(cust_id),
+    FOREIGN KEY (movie_id) REFERENCES Movies(movie_id)
+);
+CREATE TRIGGER IF NOT EXISTS valid_quantity
+BEFORE INSERT ON Tickets
+FOR EACH ROW
+WHEN NEW.quantity <= 0
+BEGIN
+    SELECT RAISE(FAIL, 'Quantity must be greater than zero');
+END;
+CREATE VIEW IF NOT EXISTS MovieSales AS
+SELECT M.title, SUM(T.quantity) AS total_tickets, SUM(M.price * T.quantity) AS total_sales
+FROM Movies M
+JOIN Tickets T ON M.movie_id = T.movie_id
+GROUP BY M.title;
+""")
+conn.commit()
+
+# Sample Movies
+cursor.execute("SELECT COUNT(*) FROM Movies")
+if cursor.fetchone()[0] == 0:
+    cursor.executemany("INSERT INTO Movies (title, language, price) VALUES (?, ?, ?)", [
+        ("Avengers", "English", 250),
+        ("RRR", "Telugu", 200),
+        ("Jawan", "Hindi", 180)
+    ])
+    conn.commit()
+
+# GUI
+root = Tk()
+root.title("Movie Ticket Reservation")
+root.geometry("400x400")
+
+Label(root, text="Customer Name").pack()
+cust_name = Entry(root)
+cust_name.pack()
+
+Label(root, text="Phone").pack()
+phone = Entry(root)
+phone.pack()
+
+Label(root, text="Select Movie").pack()
+movie_var = StringVar()
+movie_menu = OptionMenu(root, movie_var, "")
+movie_menu.pack()
+
+Label(root, text="Quantity").pack()
+quantity = Entry(root)
+quantity.pack()
+
+def refresh_movies():
+    movie_menu["menu"].delete(0, "end")
+    cursor.execute("SELECT title FROM Movies")
+    for row in cursor.fetchall():
+        movie_menu["menu"].add_command(label=row[0], command=lambda value=row[0]: movie_var.set(value))
+    movie_var.set("")
+
+refresh_movies()
+
+def book_ticket():
+    try:
+        name = cust_name.get()
+        ph = phone.get()
+        qty = int(quantity.get())
+        movie_title = movie_var.get()
+
+        if not name or not ph or not movie_title:
+            messagebox.showwarning("Input Error", "All fields are required")
+            return
+
+        cursor.execute("INSERT INTO Customers (name, phone) VALUES (?, ?)", (name, ph))
+        cust_id = cursor.lastrowid
+
+        cursor.execute("SELECT movie_id FROM Movies WHERE title = ?", (movie_title,))
+        movie_id = cursor.fetchone()[0]
+
+        cursor.execute("INSERT INTO Tickets (cust_id, movie_id, quantity) VALUES (?, ?, ?)",
+                       (cust_id, movie_id, qty))
+        conn.commit()
+        messagebox.showinfo("Success", f"{qty} ticket(s) booked for {movie_title}")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+def view_sales():
+    top = Toplevel()
+    top.title("Movie Sales Report")
+    cursor.execute("SELECT * FROM MovieSales")
+    rows = cursor.fetchall()
+    for i, row in enumerate(rows):
+        Label(top, text=f"Movie: {row[0]} | Tickets: {row[1]} | Sales: ₹{row[2]}").grid(row=i, column=0)
+
+Button(root, text="Book Ticket", command=book_ticket).pack(pady=10)
+Button(root, text="View Sales Report", command=view_sales).pack()
+
+root.mainloop()
+
+
+🧪 Sample Output (View Report)
+Movie: Avengers | Tickets: 5 | Sales: ₹1250.0  
+Movie: Jawan    | Tickets: 3 | Sales: ₹540.0
