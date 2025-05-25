@@ -1,0 +1,127 @@
+Develop a simple GUI based employee pay roll system and incorporate all the database features
+
+Table: employee
+(emp_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ name TEXT NOT NULL,
+ dept TEXT,
+ basic REAL,
+ hra REAL,
+ da REAL,
+ total_salary REAL)
+
+
+🖥 GUI Application (payroll.py)
+
+import sqlite3
+from tkinter import *
+from tkinter import messagebox
+
+# Connect DB
+conn = sqlite3.connect('payroll.db')
+cursor = conn.cursor()
+
+# Create Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS employee (
+    emp_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    dept TEXT,
+    basic REAL,
+    hra REAL,
+    da REAL,
+    total_salary REAL
+)
+""")
+
+# Trigger: Prevent negative salary
+cursor.execute("""
+CREATE TRIGGER IF NOT EXISTS check_salary
+BEFORE INSERT ON employee
+FOR EACH ROW
+WHEN NEW.basic < 0 OR NEW.hra < 0 OR NEW.da < 0
+BEGIN
+    SELECT RAISE(FAIL, 'Negative salary component not allowed');
+END;
+""")
+
+# GUI Setup
+root = Tk()
+root.title("Employee Payroll System")
+root.geometry("500x500")
+
+# Calculate Total Salary
+def calc_salary():
+    try:
+        b = float(basic.get())
+        h = float(hra.get())
+        d = float(da.get())
+        return b + h + d
+    except:
+        return 0
+
+# Add Employee
+def add_employee():
+    try:
+        total = calc_salary()
+        cursor.execute("INSERT INTO employee(name, dept, basic, hra, da, total_salary) VALUES (?, ?, ?, ?, ?, ?)", 
+                       (name.get(), dept.get(), basic.get(), hra.get(), da.get(), total))
+        conn.commit()
+        messagebox.showinfo("Success", "Employee added successfully")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+# View Employees
+def view_employees():
+    top = Toplevel()
+    top.title("Employee Records")
+
+    cursor.execute("SELECT * FROM employee")
+    rows = cursor.fetchall()
+    for i, row in enumerate(rows):
+        Label(top, text=row).grid(row=i, column=0)
+
+# Widgets
+Label(root, text="Employee Name").pack()
+name = Entry(root)
+name.pack()
+
+Label(root, text="Department").pack()
+dept = Entry(root)
+dept.pack()
+
+Label(root, text="Basic Salary").pack()
+basic = Entry(root)
+basic.pack()
+
+Label(root, text="HRA").pack()
+hra = Entry(root)
+hra.pack()
+
+Label(root, text="DA").pack()
+da = Entry(root)
+da.pack()
+
+Button(root, text="Add Employee", command=add_employee).pack(pady=10)
+Button(root, text="View Employees", command=view_employees).pack()
+
+root.mainloop()
+
+
+🧪 Sample Test
+Add:
+
+Name: Alice
+
+Dept: HR
+
+Basic: 30000
+
+HRA: 5000
+
+DA: 2000
+→ Total: 37000
+
+View: Displays employee records in a popup.
+
+Insert invalid salary (negative):
+→ Trigger activates → Shows error: "Negative salary component not allowed"
