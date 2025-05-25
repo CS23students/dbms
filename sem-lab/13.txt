@@ -1,0 +1,105 @@
+Develop a simple GUI based banking system and use all the database features
+
+🛠️ 1. DATABASE DESIGN
+
+-- Customers table
+CREATE TABLE Customers (
+    cust_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    mobile TEXT UNIQUE,
+    balance REAL CHECK(balance >= 0)
+);
+
+-- Transactions table
+CREATE TABLE Transactions (
+    trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER,
+    trans_type TEXT CHECK(trans_type IN ('DEPOSIT', 'WITHDRAW')),
+    amount REAL CHECK(amount > 0),
+    trans_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cust_id) REFERENCES Customers(cust_id)
+);
+
+
+🔁 2. TRIGGERS-- Trigger: Auto update balance after deposit or withdraw
+CREATE TRIGGER update_balance
+AFTER INSERT ON Transactions
+BEGIN
+  UPDATE Customers
+  SET balance = CASE
+      WHEN NEW.trans_type = 'DEPOSIT' THEN balance + NEW.amount
+      WHEN NEW.trans_type = 'WITHDRAW' THEN balance - NEW.amount
+      ELSE balance
+  END
+  WHERE cust_id = NEW.cust_id;
+END;
+
+
+CREATE VIEW customer_summary AS
+SELECT c.name, c.mobile, c.balance, COUNT(t.trans_id) AS total_txns
+FROM Customers c
+LEFT JOIN Transactions t ON c.cust_id = t.cust_id
+GROUP BY c.cust_id;
+
+
+🧮 4. USER-DEFINED FUNCTION (example in SQLite with Python)
+def bonus(balance):
+    return balance * 0.05 if balance > 10000 else 0
+cursor.connection.create_function("bonus", 1, bonus)
+cursor.execute("SELECT name, balance, bonus(balance) FROM Customers")
+
+🧑‍💻 5. GUI with Python (Tkinter)
+import sqlite3
+from tkinter import *
+
+conn = sqlite3.connect("bank.db")
+cursor = conn.cursor()
+
+def create_customer():
+    name = name_entry.get()
+    mobile = mobile_entry.get()
+    cursor.execute("INSERT INTO Customers (name, mobile, balance) VALUES (?, ?, ?)",
+                   (name, mobile, 0))
+    conn.commit()
+    output_label.config(text="Customer added successfully!")
+
+def make_transaction():
+    cust_id = int(custid_entry.get())
+    amount = float(amount_entry.get())
+    trans_type = var.get()
+    cursor.execute("INSERT INTO Transactions (cust_id, trans_type, amount) VALUES (?, ?, ?)",
+                   (cust_id, trans_type, amount))
+    conn.commit()
+    output_label.config(text="Transaction completed.")
+
+root = Tk()
+root.title("Banking System")
+
+Label(root, text="Name").grid(row=0, column=0)
+name_entry = Entry(root)
+name_entry.grid(row=0, column=1)
+
+Label(root, text="Mobile").grid(row=1, column=0)
+mobile_entry = Entry(root)
+mobile_entry.grid(row=1, column=1)
+
+Button(root, text="Create Customer", command=create_customer).grid(row=2, columnspan=2, pady=10)
+
+Label(root, text="Customer ID").grid(row=3, column=0)
+custid_entry = Entry(root)
+custid_entry.grid(row=3, column=1)
+
+Label(root, text="Amount").grid(row=4, column=0)
+amount_entry = Entry(root)
+amount_entry.grid(row=4, column=1)
+
+var = StringVar(value="DEPOSIT")
+Radiobutton(root, text="Deposit", variable=var, value="DEPOSIT").grid(row=5, column=0)
+Radiobutton(root, text="Withdraw", variable=var, value="WITHDRAW").grid(row=5, column=1)
+
+Button(root, text="Make Transaction", command=make_transaction).grid(row=6, columnspan=2, pady=10)
+
+output_label = Label(root, text="")
+output_label.grid(row=7, columnspan=2)
+
+root.mainloop()
