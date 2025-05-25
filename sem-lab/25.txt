@@ -1,0 +1,128 @@
+dbms model lab qn
+create table for salesman, customer, orders
+
+a. find salesman name and for which the salesman id in customer is more than 1
+
+b.  union select salesman, customer for which has indicates who dont have and who have more no. of cities
+
+c. view table for highest orders of day
+
+d. delete id 1000
+
+e. triggers for above
+
+
+🗃️ Table Structures
+-- Salesman Table
+CREATE TABLE Salesman (
+    salesman_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    city VARCHAR(50)
+);
+
+-- Customer Table
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    city VARCHAR(50),
+    salesman_id INT,
+    FOREIGN KEY (salesman_id) REFERENCES Salesman(salesman_id)
+);
+
+-- Orders Table
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    order_date DATE,
+    customer_id INT,
+    amount DECIMAL(10,2),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+);
+
+
+🔁 Insert Sample Data
+-- Salesman
+INSERT INTO Salesman VALUES (1, 'Ravi', 'Chennai');
+INSERT INTO Salesman VALUES (2, 'Anil', 'Delhi');
+INSERT INTO Salesman VALUES (3, 'Kumar', 'Mumbai');
+
+-- Customer
+INSERT INTO Customer VALUES (101, 'Arun', 'Chennai', 1);
+INSERT INTO Customer VALUES (102, 'Meena', 'Delhi', 1);
+INSERT INTO Customer VALUES (103, 'Vikram', 'Mumbai', 2);
+INSERT INTO Customer VALUES (104, 'Priya', 'Delhi', 3);
+INSERT INTO Customer VALUES (105, 'Neha', 'Chennai', 1);
+
+-- Orders
+INSERT INTO Orders VALUES (1000, '2024-10-01', 101, 2500);
+INSERT INTO Orders VALUES (1001, '2024-10-01', 102, 3500);
+INSERT INTO Orders VALUES (1002, '2024-10-02', 103, 2000);
+INSERT INTO Orders VALUES (1003, '2024-10-02', 105, 4500);
+
+
+
+🔍 a) Find salesman name for which the salesman_id in Customer appears more than once
+SELECT s.name, s.salesman_id
+FROM Salesman s
+JOIN Customer c ON s.salesman_id = c.salesman_id
+GROUP BY s.name, s.salesman_id
+HAVING COUNT(c.customer_id) > 1;
+
+
+🔁 b) UNION – Show salesman and customers indicating who has more cities
+-- Cities covered by salesmen
+SELECT 'Salesman' AS Role, name, city FROM Salesman
+
+UNION
+
+-- Cities covered by customers
+SELECT 'Customer' AS Role, name, city FROM Customer;
+
+
+👁️ c) View for highest order of each day
+CREATE VIEW Daily_Highest_Order AS
+SELECT o.order_date, c.name AS customer_name, o.amount
+FROM Orders o
+JOIN Customer c ON o.customer_id = c.customer_id
+WHERE o.amount = (
+  SELECT MAX(o2.amount)
+  FROM Orders o2
+  WHERE o2.order_date = o.order_date
+);
+
+-- View usage
+SELECT * FROM Daily_Highest_Order;
+
+
+❌ d) Delete order with id 1000
+DELETE FROM Orders WHERE order_id = 1000;
+
+
+ e) Triggers
+i. Trigger on Insert into Orders (log order info)
+CREATE TABLE Order_Log (
+    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INT,
+    action TEXT,
+    log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER trg_order_insert
+AFTER INSERT ON Orders
+BEGIN
+  INSERT INTO Order_Log (order_id, action) VALUES (NEW.order_id, 'Inserted');
+END;
+
+ii. Trigger on Delete from Orders
+CREATE TRIGGER trg_order_delete
+AFTER DELETE ON Orders
+BEGIN
+  INSERT INTO Order_Log (order_id, action) VALUES (OLD.order_id, 'Deleted');
+END;
+
+
+-- Result of a):
+-- Salesmen with multiple customers
+
+NAME     | SALESMAN_ID
+---------|-------------
+Ravi     | 1
