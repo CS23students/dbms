@@ -1,0 +1,90 @@
+Create a table Supplier (sup_no,sup_name,item_supplied,item_price,city)
+A) write sql query to display supplier numbers and supplier names whose name starts with 'S'
+B) write sql query to add a new column called CONTACTNO
+C) write a sql query to display numbers,supplier names and item price for suppliers in Chennai in the ascending order of item price
+D) create a view on the table which displays only supplier numbers and supplier names
+E) demonstrate the procedure for the supplier table
+
+🔸 Create Table: Supplier
+CREATE TABLE Supplier (
+    sup_no INT PRIMARY KEY,
+    sup_name VARCHAR(50),
+    item_supplied VARCHAR(50),
+    item_price DECIMAL(10,2),
+    city VARCHAR(50)
+);
+
+
+📥 Insert Sample Data
+INSERT INTO Supplier VALUES (1, 'Sundar', 'Laptop', 55000, 'Chennai');
+INSERT INTO Supplier VALUES (2, 'Karthik', 'Mouse', 500, 'Delhi');
+INSERT INTO Supplier VALUES (3, 'Suresh', 'Monitor', 12000, 'Chennai');
+INSERT INTO Supplier VALUES (4, 'Anil', 'Keyboard', 700, 'Mumbai');
+INSERT INTO Supplier VALUES (5, 'Santhosh', 'Webcam', 2500, 'Chennai');
+
+
+🔹 A) Display supplier numbers and names where name starts with 'S'
+SELECT sup_no, sup_name
+FROM Supplier
+WHERE sup_name LIKE 'S%';
+
+SUP_NO | SUP_NAME
+-------|----------
+1      | Sundar
+3      | Suresh
+5      | Santhosh
+
+
+🔹 B) Add a new column called CONTACTNO
+ALTER TABLE Supplier ADD contactno VARCHAR(15);
+
+
+🔹 C) Display supplier no, name & price for Chennai in ascending item_price
+SELECT sup_no, sup_name, item_price
+FROM Supplier
+WHERE city = 'Chennai'
+ORDER BY item_price ASC;
+
+
+SUP_NO | SUP_NAME  | ITEM_PRICE
+-------|-----------|-----------
+5      | Santhosh  | 2500
+3      | Suresh    | 12000
+1      | Sundar    | 55000
+
+
+
+🔹 D) Create a view displaying only supplier numbers and names
+CREATE VIEW Supplier_View AS
+SELECT sup_no, sup_name
+FROM Supplier;
+
+
+-- View usage:
+SELECT * FROM Supplier_View;
+
+
+
+🔹 E) Procedure for inserting supplier data
+CREATE OR REPLACE PROCEDURE add_supplier (
+    p_sup_no IN Supplier.sup_no%TYPE,
+    p_sup_name IN Supplier.sup_name%TYPE,
+    p_item_supplied IN Supplier.item_supplied%TYPE,
+    p_item_price IN Supplier.item_price%TYPE,
+    p_city IN Supplier.city%TYPE,
+    p_contactno IN Supplier.contactno%TYPE
+) AS
+BEGIN
+    INSERT INTO Supplier (sup_no, sup_name, item_supplied, item_price, city, contactno)
+    VALUES (p_sup_no, p_sup_name, p_item_supplied, p_item_price, p_city, p_contactno);
+
+    DBMS_OUTPUT.PUT_LINE('Supplier inserted successfully.');
+END;
+
+
+ To Execute the Procedure
+BEGIN
+    add_supplier(6, 'Subash', 'Printer', 8000, 'Coimbatore', '9876543210');
+END;
+
+
