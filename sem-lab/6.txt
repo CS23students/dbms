@@ -1,0 +1,116 @@
+6. Create the tables:
+
+CUSTOMER (C_ID, Name, Address, City, Mobile_No)
+
+ORDER (C_ID, P_ID, P_Name, P_COST)
+
+Then, perform the following operations:
+a) List the names and addresses of all the customers who have ordered products costing more than 500.
+b) List the names of all the products ordered whose cost is 1,000 or more.
+c) List the product names which are ordered by customers from the city= "Delhi".
+d) Add a column "Email_id" in the CUSTOMER table.
+e) Demonstrate a user-defined function for the above tables.
+
+
+ Step 1: Create Tables
+
+CREATE TABLE CUSTOMER (
+  C_ID NUMBER PRIMARY KEY,
+  Name VARCHAR2(50),
+  Address VARCHAR2(100),
+  City VARCHAR2(30),
+  Mobile_No VARCHAR2(15)
+);
+
+CREATE TABLE ORDER_TABLE (
+  C_ID NUMBER,
+  P_ID NUMBER,
+  P_Name VARCHAR2(50),
+  P_COST NUMBER,
+  FOREIGN KEY (C_ID) REFERENCES CUSTOMER(C_ID)
+);
+
+ Step 2: Insert Sample Data
+-- Customers
+INSERT INTO CUSTOMER VALUES (1, 'Ravi', 'Street 1', 'Chennai', '9876543210');
+INSERT INTO CUSTOMER VALUES (2, 'Priya', 'Avenue 5', 'Delhi', '9123456780');
+INSERT INTO CUSTOMER VALUES (3, 'Arun', 'Road 8', 'Mumbai', '9988776655');
+
+-- Orders
+INSERT INTO ORDER_TABLE VALUES (1, 101, 'Laptop', 55000);
+INSERT INTO ORDER_TABLE VALUES (2, 102, 'Mobile', 800);
+INSERT INTO ORDER_TABLE VALUES (3, 103, 'Headphones', 450);
+INSERT INTO ORDER_TABLE VALUES (2, 104, 'Tablet', 1200);
+
+
+ Step 3: Queries
+
+a) Names and addresses of customers who ordered products costing > 500:
+SELECT DISTINCT C.Name, C.Address
+FROM CUSTOMER C, ORDER_TABLE O
+WHERE C.C_ID = O.C_ID AND O.P_COST > 500;
+
+sample op:
+NAME       ADDRESS
+---------- ----------
+Ravi       Street 1
+Priya      Avenue 5
+
+
+b) Product names with cost >= 1000:
+SELECT P_Name
+FROM ORDER_TABLE
+WHERE P_COST >= 1000;
+
+op:
+P_NAME
+----------
+Laptop
+Tablet
+
+c) Product names ordered by customers from "Delhi":
+SELECT O.P_Name
+FROM ORDER_TABLE O, CUSTOMER C
+WHERE O.C_ID = C.C_ID AND C.City = 'Delhi';
+
+op:
+P_NAME
+----------
+Mobile
+Tablet
+
+d) Add a column Email_id in CUSTOMER table:
+ALTER TABLE CUSTOMER ADD Email_id VARCHAR2(50);
+
+e) User-Defined Function: Get Total Order Value for a Customer
+CREATE OR REPLACE FUNCTION get_total_order(cust_id NUMBER)
+RETURN NUMBER
+IS
+  total_cost NUMBER := 0;
+BEGIN
+  SELECT SUM(P_COST) INTO total_cost
+  FROM ORDER_TABLE
+  WHERE C_ID = cust_id;
+
+  RETURN NVL(total_cost, 0);
+END;
+/
+
+
+Usage:
+SELECT Name, get_total_order(C_ID) AS Total_Amount
+FROM CUSTOMER;
+op:
+NAME       TOTAL_AMOUNT
+---------- -------------
+Ravi       55000
+Priya      2000
+Arun       450
+
+
+
+
+
+
+
+
